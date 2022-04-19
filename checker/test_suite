@@ -1,0 +1,451 @@
+import xml.etree.ElementTree as ElementTree
+import os
+
+
+
+def comment(string):
+        for s in string.splitlines():
+                print('Comment :=>> ' + s)
+
+def comment_fixed_font(string):
+        for s in string.splitlines():
+                print('Comment :=>>> ' + s)
+
+comment=comment_fixed_font
+def print_grade(num):
+    print('Grade :=>> ' + str(num))
+
+test_categories={'java':'java','python':'python','r':'python',"flutter":"flutter",'octave':'octave'}
+lang = os.getenv("LANG_TESTER","en")
+trads = {
+
+    "end":{
+        "fr":"Fin des tests",
+        "en":"End of all tests"
+        }
+        ,
+    "tests_success":{
+        "fr":"{}/{} tests réussis en {}s",
+        "en":"{}/{} tests passed in {}s",
+    },
+    "exception_thrown":{
+        "fr":"Durant le test, une exception a été renvoyée:",
+        "en":"During the test, an exception has been thrown:"
+    },
+    "test_number":{
+        "fr":"Test numéro {} sur {}.",
+        "en":"Test number {} over {}."
+    },
+    "main_script":{
+        "fr":"Programme principal",
+        "en":"Main script"
+    },
+    "function":{
+        "fr":"Fonction",
+        "en":"Function"
+    },
+    "compile_error":{
+        "fr":'Erreur à la compilation:',
+        "en":"Error at compile time:"
+    },
+    "passed_in":{
+        "fr":"passé en",
+        "en":"passed in"
+    },
+    "failed":{
+        "fr":"échoué",
+        "en":"failed"
+    },
+    "grade":{
+        "fr":"Note : {}/100",
+        "en":"Grade : {}/100"
+    },
+    "test_results":{
+        "fr":"Résultat des tests",
+        "en":"Tests results"
+    },
+    "test_variable":{
+        "fr":"Test de la variable ",
+        "en":"Testing variable "
+    },
+    "no_report_xml":{
+        "fr":"Il s'est passé quelque chose d'inattendu, veuillez contacter votre professeur ou votre administrateur.",
+        "en":"Something unexpected happened, please contact your teacher or administrator.",
+    },
+}
+comment_strings = {
+    key : item[lang]
+    for key,item in trads.items()
+}
+
+
+class TestSuite:
+    """
+    A class for handling test results from a junit5 xml output.
+    """
+
+    def __init__(self, filename=None,grade_categories={},language="java"):
+        # TODO: remove this temporary fix
+        global comment_strings
+        if language == "r":
+            for key,item in trads.items():
+                comment_strings[key] = item["fr"]
+
+        self.language=test_categories[language]
+        if self.language in ['python','flutter','octave']:
+            filename="report.xml"
+        elif self.language=="java":
+            filename='reports/TEST-junit-jupiter.xml'
+            if check_junit_errors():
+                raise RuntimeException('junit has errors')
+        else:
+            raise NotImplementedError(f'Language {language} not supported yet')
+        self._categories = {}
+        grade_tot=sum(grade_categories.values())
+        prefix = "Tests " if self.language == "java" else ""
+        self._grade_categories={prefix+category:round(grade*100/grade_tot) for category,grade in grade_categories.items()}
+        if filename not in os.listdir():
+            comment(comment_strings["no_report_xml"])
+            print(f"Error: file {filename} not found !")
+        else:
+            self.load(filename)
+
+    def has_errors(self):
+        return any(category.has_errors() for category in self._categories.values())
+
+    def load(self, filename, clean=False):
+        """
+        Open the file filename and add all tests to the suite, creating new categories when needed.
+
+        Arguments:
+        filename -- name of the XML file to be parsed
+        clean -- if True, the TestSuite is emptied before loading (default: False)
+        """
+
+        if clean:
+            self._categories.clear()
+
+        tmp_file = "__test.xml__"
+        content=open(filename).read()
+        if self.language in ["octave"]:
+            content = content.strip().replace('>\n','>')
+        if self.language in ["python","octave"]:
+            content=content.strip().replace('\n','{__LINEBREAK__}')
+
+        open(tmp_file, 'w').write(
+            content.replace('{__LINEBREAK__}', "&#10;")
+        )
+
+        root = ElementTree.parse(tmp_file).getroot()
+        if self.language in ["python", "flutter", "octave"]:
+            root=root.find('.testsuite')
+        for element in root.findall('.testcase'):
+            self._add(element)
+
+    def print(self, max_error_print=3):
+        """
+        Prints all the categories and tests, with a maximum of max_error_print errors shown per category.
+        """
+        nb_tests = 0
+        nb_success = 0
+        time = 0
+        grade=0
+
+        for category in self._categories.values():
+            category.print(max_error_print)
+            nb_tests+=category.nb_tests
+            nb_success+=category.nb_success
+            time+=category.time
+            grade+=category.grade
+        delim="#"
+        size=40
+        title=comment_strings['end']
+        success=comment_strings['tests_success'].format(nb_success,nb_tests,round(time,4))
+        comment(delim * (size+2))
+        comment(delim+title.center(size)+delim)
+        comment(delim+success.center(size)+delim)
+        comment(delim+comment_strings['grade'].format(grade).center(size)+delim)
+        comment(delim * (size+2))
+        print_grade(grade)
+
+    def _add(self, element):
+        category, grade = self._get_name_grade(element)
+        if category not in self._categories:
+            self._categories[category] = TestCategory(category, grade, self.language)
+        self._categories[category].add(element)
+
+    def _get_name_grade(self,element):
+        if self.language in ["flutter","octave"]:
+            return comment_strings["test_results"],100
+        elif self.language == "python":
+            infos=get_python_test_infos(element)
+            grade=infos['grade']
+            category = infos['category_fullname']
+            self._grade_categories[category]=grade
+            return category, grade
+
+        full_name = element.get('name')
+        index1=full_name.find('(')
+        category = ''.join(" " + c if c.isupper() else c for c in full_name[:index1]).title()
+
+        if self._grade_categories:
+            if category not in self._grade_categories:
+                print(f'La catégorie "{category}" ne possède pas de note.')
+                grade=0
+            else:
+                grade=self._grade_categories[name]
+        else:
+            grade=100
+            name="Résultats"
+        return category, grade
+
+
+class TestCategory:
+    """
+    Class for loading and printing tests from the same test class
+    """
+
+    def __init__(self, name, max_grade,language):
+        self._tests = []
+        self.nb_success = 0
+        self.time = 0
+        self._raw_name = name
+        self.max_grade = max_grade
+        self.language=language
+
+    @property
+    def name(self):
+        return self._raw_name
+
+    @property
+    def grade(self):
+        """Calculates and returns the grade of the whole category"""
+        if not self._tests:
+            return 0
+        return round(self.max_grade * self.nb_success / len(self._tests))
+
+    @property
+    def nb_tests(self):
+        """Number of tests added to the category"""
+        return len(self._tests)
+
+    def has_errors(self):
+        return len(self._tests) > self.nb_success
+
+    def add(self, element):
+        """
+        Add a test to the category from a xml testcase element.
+
+        Returns:
+        - False if the test is skipped, and does not add the test
+        - True otherwise, and adds the test to the category
+        """
+        test = Test(element,self.language)
+        if test.skipped:
+            return
+        self.nb_success += test.success
+        self._tests.append(test)
+        self.time += test.time
+
+    def print(self, max_error_print):
+        """
+        Prints the category name and tests, with a maximum of max_error_print errors shown.
+        """
+        nb_tests=len(self._tests)
+        if not self._tests:
+            return
+        self._banner_section()
+        errors_remaining = max_error_print
+        for cur_test,test in enumerate(self._tests):
+            test._correct_name(cur_test,nb_tests)
+            test.print(errors_remaining > 0)
+            errors_remaining -= test.fail
+
+    def _banner_section(self, delim="=", size=40):
+        title = f'{self.name} - {self.grade}/{self.max_grade}'
+        comment(delim * size)
+        comment(title.center(size))
+        comment(delim * size)
+
+
+class Test:
+    """
+    Implements one unit test
+    """
+
+    def __init__(self, element, language):
+        if element.find('.skipped') is not None:
+            self.skipped = True
+            return
+        self.skipped = False
+        self._error = None
+        self.time = float(element.get('time'))
+        failure = element.find('.failure')
+        error = element.find('.error')
+        sysout = element.find('.system-out')
+        self.language = language
+        self.name = self._get_display_name(element)
+        self._set_error(failure, error, sysout)
+
+    @property
+    def success(self):
+        """
+        True if the test succeeds, false otherwise
+        """
+        return self._error is None
+
+    @property
+    def fail(self):
+        """
+        True if the test fails, false otherwise
+        """
+        return not self.success
+
+    def __str__(self):
+        if self.success:
+            return f'{self.name}: '+comment_strings['passed_in']+f" {self.time}s."
+        else:
+            return f'{self.name}: '+comment_strings['failed']+"."
+
+    def _set_error(self, failure, error, sysout):
+        if failure is None:
+            if self.language == "flutter" and sysout is not None:
+                strings = sysout.text.split('___')
+                string = strings[1] if len(strings)>1 else strings[0]
+            elif error is None:
+                return
+            else:
+                lines=error.text.splitlines()
+                if len(lines)>=2:
+                    l1,l2,*_=lines
+                string = comment_strings['exception_thrown']+"\n"+l1
+                if l2.strip().startswith('at student.'):
+                    string +='\n'+l2
+        else:
+            if self.language == "java":
+                string = failure.get('message').replace('==>','\n==>').strip()
+            elif self.language == "python":
+                string = failure.get('message')
+                string = string[string.find(':')+1:].strip()
+            elif self.language == "octave":
+                string = failure.get('message')+"\n"+failure.text[:failure.text.find('(')]
+            elif self.language == "flutter":
+                    string = failure.text
+                    string = string[string.find(':')+1:].replace('\\n','\n').strip()
+            else:
+                raise NotImplementedError(f"language {self.language} not supported yet")
+        if not (string):
+            return
+        self._error = '\n'.join(
+            line
+            for line in string.replace('&#10;','\n').splitlines()
+            if "==>" not in line
+        ).strip()
+
+
+    def _correct_name(self,cur_test,nb_tests):
+        """
+        If the test is a repeated test, then change the name with proper number and total number.
+        """
+        if self.name.startswith('REPEATED'):
+            self.name=comment_strings['test_number'].format(cur_test+1,nb_tests)
+
+    def print(self, print_errors=True):
+        """
+        Prints the name of the test, its time and the errors if applicable and print_errors=True
+        """
+        tab = '   '
+        comment(tab + str(self))
+        if self._error and print_errors:
+            comment(tab * 2 + '~' * 30)
+            self._error=self._error.strip()
+            if not(self._error.startswith) != "Entrée":
+                self._error=self._error[self._error.find(':')+1:]
+            for line in self._error.splitlines():
+                if line.startswith('assert'):
+                    break
+                comment(tab * 2 + line.strip())
+            comment(tab * 2 + '~' * 30)
+
+    def _get_display_name(self,element):
+        if self.language=="python":
+            name=get_python_test_infos(element)['fullname']
+            return name
+        elif self.language == "flutter":
+            return element.get("name")
+        elif self.language == "octave":
+            return element.get("name").replace("test_field_",comment_strings['test_variable'])
+        for line in element.find('.system-out').text.splitlines():
+            if line.startswith('display-name:'):
+                return line[line.find(':') + 1:].strip()
+        raise ValueError('Element has no display name')
+
+def get_python_category_fullname(category):
+    return comment_strings['function']+" "+category if category !="__script__" else comment_strings['main_script']
+
+def get_python_test_infos(element):
+    """
+    get category and name from an xml element for python
+    """
+    name = element.get('name')
+    if name.startswith("test_function_"):
+        #This is for python
+        subs=name[len("test_function_"):]
+        if "[" in subs:
+            first_bracket=subs.find('[')
+            numbers=subs[first_bracket+1:-1]
+            numtest,nbtest = numbers.split('-')
+            subs=subs[:first_bracket]
+        else:
+            numtest,nbtest = 1,1
+        fullname = comment_strings['test_number'].format(numtest,nbtest)
+        category,_,grade = subs.rpartition('_')
+    elif name.startswith("test_routine"):
+        #This is for R
+        subs=name[len("test_routine")+1:-1]
+        category = "__script__"
+        grade = 100
+        if "-" in subs:
+            numtest,nbtest = subs.split("-")
+            fullname = comment_strings['test_number'].format(numtest,nbtest)
+        else:
+            fullname = comment_strings['test_variable']+subs
+    else:
+        raise NotImplementedError()
+
+
+    return {
+                'category':category,
+                'fullname':fullname,
+                'grade':int(grade),
+                'category_fullname': get_python_category_fullname(category)
+        }
+
+
+def check_compile():
+    stdout=open('compile_student.log').read()
+    print(stdout)
+    if 'error' in stdout:
+        comment('#'*50)
+        comment(comment_strings['compile_error'].center(50))
+        comment('#'*50+'\n')
+        comment_fixed_font(stdout)
+        print_grade(0)
+        sys.exit(1)
+
+def check_junit_errors(filename="__junit__.log"):
+    string=open(filename).read()
+    has_errors=False
+    for s in string.split('__AFRICATEK_TEST_METHOD__'):
+        if not s.strip():
+            continue
+        if "__METHOD__" in s and not s.strip().endswith('__METHOD__'):
+            has_errors=True
+            comment(s.replace('__METHOD__',"~~~~~~~~~~~~~~~"))
+    return has_errors
+
+import sys
+if __name__=="__main__":
+     testtype=sys.argv[1]
+     if testtype=="compile":
+         check_compile()

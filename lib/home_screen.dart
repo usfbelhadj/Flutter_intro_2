@@ -20,7 +20,6 @@ class HomeScreen extends StatelessWidget {
     var resJson = jsonDecode(response.body);
     for (var i = 0; i < resJson.length; i++) {
       final char = Character.fromJson(resJson[i]);
-      print(char.toJson());
       characList.add(char);
     }
     return characList;
