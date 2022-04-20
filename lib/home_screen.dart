@@ -8,22 +8,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'models.dart';
 import 'quotes_screen.dart';
+import 'util.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
-
-  Future<List<Character>> fetchBbCharacters() async {
-    List<Character> characList = [];
-    final response = await http.get(
-      Uri.parse('https://www.breakingbadapi.com/api/characters'),
-    );
-    var resJson = jsonDecode(response.body);
-    for (var i = 0; i < resJson.length; i++) {
-      final char = Character.fromJson(resJson[i]);
-      characList.add(char);
-    }
-    return characList;
-  }
 
   @override
   Widget build(BuildContext context) {
