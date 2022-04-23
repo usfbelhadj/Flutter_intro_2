@@ -1,10 +1,15 @@
-import 'models.dart';
-import 'dart:convert';
+// ignore_for_file: file_names
+
+import 'package:breaking_bad/models.dart';
 import 'package:http/http.dart' as http;
 
-Future<List<Character>> fetchBbCharacters(http.Client client) async {
+import 'dart:convert';
+
+// ignore: non_constant_identifier_names
+Future<List<Character>> api_loader() async {
   List<Character> characList = [];
-  final response = await client.get(
+
+  final response = await http.get(
     Uri.parse('https://www.breakingbadapi.com/api/characters'),
   );
   var resJson = jsonDecode(response.body);
@@ -12,5 +17,9 @@ Future<List<Character>> fetchBbCharacters(http.Client client) async {
     final char = Character.fromJson(resJson[i]);
     characList.add(char);
   }
-  return characList;
+
+  return (characList);
+}
+Future<List<Character>> simulator() async {
+  return [];
 }

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite errors="0" failures="5" tests="15" skipped="0" name="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" timestamp="2022-04-19T22:09:32">
+    <properties>
+      <property name="platform" value="vm"/>
+    </properties>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing Class Attributes    1 / 5" time="0.026"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing Class Attributes    2 / 5" time="0.003"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing Class Attributes    3 / 5" time="0.002"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing Class Attributes    4 / 5" time="0.001"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing Class Attributes    5 / 5" time="0.002"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing toJson method  1 / 5" time="0.024">
+      <failure message="1 failure, see stacktrace for details">Failure:
+
+Expected: {'name': 'Kaden', 'img': 'http://abernathy.info', 'id': 20}
+  Actual: {'id': 20, 'name': 'Kaden', 'img': 'dzd'}
+   Which: at location ['img'] is 'dzd' instead of 'http://abernathy.info'
+toJson method Should return {name: Kaden, img: http://abernathy.info, id: 20}
+</failure>
+    </testcase>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing toJson method  2 / 5" time="0.011">
+      <failure message="1 failure, see stacktrace for details">Failure:
+
+Expected: {'name': 'Joey', 'img': 'http://king.info', 'id': 26}
+  Actual: {'id': 26, 'name': 'Joey', 'img': 'dzd'}
+   Which: at location ['img'] is 'dzd' instead of 'http://king.info'
+toJson method Should return {name: Joey, img: http://king.info, id: 26}
+</failure>
+    </testcase>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing toJson method  3 / 5" time="0.01">
+      <failure message="1 failure, see stacktrace for details">Failure:
+
+Expected: {'name': 'Adele', 'img': 'http://prosacco.biz', 'id': 25}
+  Actual: {'id': 25, 'name': 'Adele', 'img': 'dzd'}
+   Which: at location ['img'] is 'dzd' instead of 'http://prosacco.biz'
+toJson method Should return {name: Adele, img: http://prosacco.biz, id: 25}
+</failure>
+    </testcase>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing toJson method  4 / 5" time="0.012">
+      <failure message="1 failure, see stacktrace for details">Failure:
+
+Expected: {'name': 'Piper', 'img': 'http://walsh.us', 'id': 42}
+  Actual: {'id': 42, 'name': 'Piper', 'img': 'dzd'}
+   Which: at location ['img'] is 'dzd' instead of 'http://walsh.us'
+toJson method Should return {name: Piper, img: http://walsh.us, id: 42}
+</failure>
+    </testcase>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing toJson method  5 / 5" time="0.009">
+      <failure message="1 failure, see stacktrace for details">Failure:
+
+Expected: {'name': 'Angelina', 'img': 'http://herman.co.uk', 'id': 0}
+  Actual: {'id': 0, 'name': 'Angelina', 'img': 'dzd'}
+   Which: at location ['img'] is 'dzd' instead of 'http://herman.co.uk'
+toJson method Should return {name: Angelina, img: http://herman.co.uk, id: 0}
+</failure>
+    </testcase>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing from json  1 / 5" time="0.003"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing from json  2 / 5" time="0.002"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing from json  3 / 5" time="0.002"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing from json  4 / 5" time="0.002"/>
+    <testcase classname="C:.Users.Ahmed belhaj.Desktop.Flutter_intro_2.test.test_char" name="Test 1: Testing from json  5 / 5" time="0.002"/>
+  </testsuite>
+</testsuites>
